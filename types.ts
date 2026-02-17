@@ -1,0 +1,202 @@
+
+export type Role = 'admin' | 'worker' | 'driver' | null;
+
+export type Language = 'fr' | 'ar';
+
+export interface MenuItem {
+  id: string;
+  label: string;
+  icon: string;
+  roles: ('admin' | 'worker' | 'driver' | null)[];
+}
+
+export interface ElementPosition {
+  x: number;
+  y: number;
+}
+
+export interface CustomText {
+  id: string;
+  content: string;
+  x: number;
+  y: number;
+  fontSize: number;
+  color: string;
+  isBold: boolean;
+}
+
+export interface InvoiceDesign {
+  logoPosition: ElementPosition;
+  titlePosition: ElementPosition;
+  clientInfoPosition: ElementPosition;
+  carInfoPosition: ElementPosition;
+  financialsPosition: ElementPosition;
+  extraTexts: CustomText[];
+  primaryColor: string;
+  secondaryColor: string;
+  accentColor: string;
+  fontSizeBase: number;
+  headerPadding: number;
+  showChecklist: boolean;
+  labels: {
+    title: string;
+    total: string;
+    date: string;
+    ref: string;
+    safetyTitle: string;
+    equipmentTitle: string;
+    comfortTitle: string;
+    partnerLabel: string;
+    carLabel: string;
+  };
+}
+
+export interface InvoiceTemplate {
+  id: string;
+  name: string;
+  type: string;
+  design: InvoiceDesign;
+}
+
+export interface Supplier {
+  id: string;
+  name: string;
+  code: string;
+  photo?: string;
+  dob?: string;
+  pob?: string;
+  address?: string;
+  mobile: string;
+  phone2?: string;
+  nif?: string;
+  rc?: string;
+  nis?: string;
+  art?: string;
+  idDocType?: string;
+  idDocNumber?: string;
+  idDocImages?: string[];
+  purchaseHistory?: {
+    id: string;
+    date: string;
+    item: string;
+    amount: number;
+  }[];
+  created_at?: string;
+}
+
+export interface SaleRecord {
+  id?: string;
+  car_id: string;
+  first_name: string;
+  last_name: string;
+  dob?: string;
+  gender?: string;
+  pob?: string;
+  address?: string;
+  profession?: string;
+  mobile1: string;
+  mobile2?: string;
+  nif?: string;
+  rc?: string;
+  nis?: string;
+  art?: string;
+  doc_type?: string;
+  doc_number: string;
+  issue_date?: string;
+  expiry_date?: string;
+  photo?: string;
+  scan?: string;
+  signature?: string;
+  total_price: number;
+  amount_paid: number;
+  balance: number;
+  status: 'completed' | 'debt';
+  created_at?: string;
+}
+
+export interface PurchaseRecord {
+  id: string;
+  supplierId: string;
+  supplierName: string;
+  make: string;
+  model: string;
+  plate: string;
+  year: string;
+  color: string;
+  vin: string;
+  fuel: 'essence' | 'diesel';
+  transmission: 'manuelle' | 'auto';
+  seats: number;
+  doors: number;
+  mileage: number;
+  insuranceExpiry: string;
+  techControlDate: string;
+  insuranceCompany: string;
+  photos: string[];
+  totalCost: number;
+  sellingPrice: number;
+  dateAdded: string;
+  is_sold?: boolean;
+}
+
+export interface InspectionRecord {
+  id: string;
+  type: 'checkin' | 'checkout';
+  car_id: string;
+  carName: string;
+  vin: string;
+  date: string;
+  mileage: number;
+  safety: any;
+  equipment: any;
+  comfort: any;
+  note?: string;
+  photos: any;
+  partner_name: string;
+}
+
+export interface Worker {
+  id: string;
+  fullname: string;
+  birthday?: string;
+  telephone: string;
+  email?: string;
+  address?: string;
+  id_card?: string;
+  type: string;
+  payment_type: 'month' | 'day';
+  amount: number;
+  photo?: string;
+  username?: string;
+  password?: string;
+  created_at?: string;
+}
+
+export interface Expense {
+  id: string;
+  name: string;
+  cost: number;
+  date: string;
+}
+
+export interface Maintenance {
+  id: string;
+  vehicleId: string;
+  vehicleName: string;
+  type: 'vidange' | 'assurance' | 'controle' | 'other';
+  name: string;
+  cost: number;
+  date: string;
+  expiryDate?: string;
+  note?: string;
+}
+
+export interface BillingRecord {
+  id: string;
+  type: 'sale' | 'purchase' | 'checkin' | 'checkout';
+  ref: string;
+  date: string;
+  partner: string;
+  amount?: number;
+  car: string;
+}
