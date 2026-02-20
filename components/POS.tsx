@@ -43,6 +43,8 @@ export const POS: React.FC<POSProps> = ({ lang }) => {
   const [selectedCar, setSelectedCar] = useState<PurchaseRecord | null>(null);
   const [isDrafting, setIsDrafting] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSalesHistory, setShowSalesHistory] = useState(false);
+  const [allSales, setAllSales] = useState<(SaleRecord & { car?: PurchaseRecord })[]>([]);
 
   // States pour le Studio d'Impression
   const [printingSale, setPrintingSale] = useState<SaleRecord | null>(null);
@@ -82,6 +84,31 @@ export const POS: React.FC<POSProps> = ({ lang }) => {
       console.error('Inventory Fetch Error:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAllSales = async () => {
+    try {
+      const { data: sales, error } = await supabase
+        .from('sales')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      // Fetch car details for each sale
+      const { data: purchases } = await supabase.from('purchases').select('*');
+      const purchasesMap = new Map(purchases?.map(p => [p.id, p]) || []);
+      
+      const salesWithCars = sales?.map(s => ({
+        ...s,
+        car: purchasesMap.get(s.car_id)
+      })) || [];
+      
+      setAllSales(salesWithCars);
+      setShowSalesHistory(true);
+    } catch (err) {
+      console.error('Sales Fetch Error:', err);
     }
   };
 
@@ -410,9 +437,12 @@ export const POS: React.FC<POSProps> = ({ lang }) => {
                <h3 className="text-4xl font-black text-slate-900 tracking-tighter">Catalogue de Vente</h3>
                <p className="text-slate-400 font-bold text-xs uppercase tracking-widest mt-2 italic">UNITÉS DISPONIBLES EN SHOWROOM</p>
              </div>
-             {selectedCar && (
-               <button onClick={() => { setIsDrafting(true); setTotalPrice(selectedCar.sellingPrice); }} className="custom-gradient-btn px-16 py-6 rounded-[2.5rem] text-white font-black uppercase text-xs tracking-widest shadow-2xl transition-all hover:scale-105 active:scale-95 animate-in zoom-in-75">Ouvrir Dossier Client →</button>
-             )}
+             <div className="flex gap-4 items-center">
+               <button onClick={fetchAllSales} className="px-10 py-4 rounded-2xl bg-slate-100 text-slate-700 font-black text-[10px] uppercase tracking-widest hover:bg-slate-200 transition-all shadow-sm">📋 Historique Ventes</button>
+               {selectedCar && (
+                 <button onClick={() => { setIsDrafting(true); setTotalPrice(selectedCar.sellingPrice); }} className="custom-gradient-btn px-16 py-6 rounded-[2.5rem] text-white font-black uppercase text-xs tracking-widest shadow-2xl transition-all hover:scale-105 active:scale-95 animate-in zoom-in-75">Ouvrir Dossier Client →</button>
+               )}
+             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
              {inventory.map(car => (
@@ -561,6 +591,135 @@ export const POS: React.FC<POSProps> = ({ lang }) => {
                    </button>
                 </div>
              </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sales History Modal */}
+      {showSalesHistory && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="relative bg-white w-full max-w-7xl h-[90vh] rounded-[4rem] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95">
+            {/* Header */}
+            <div className="px-12 py-10 flex items-center justify-between bg-white border-b border-slate-100 shrink-0">
+              <div className="flex items-center gap-6">
+                <div className="h-16 w-16 rounded-[1.8rem] bg-blue-600 text-white flex items-center justify-center text-4xl shadow-xl">📋</div>
+                <div>
+                  <h2 className="text-4xl font-black text-slate-800 tracking-tight">Historique des Ventes</h2>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Tous les véhicules vendus avec détails complets</p>
+                </div>
+              </div>
+              <button onClick={() => setShowSalesHistory(false)} className="h-14 w-14 bg-white border border-slate-100 rounded-full flex items-center justify-center text-2xl hover:bg-red-50 text-slate-400 transition-all">✕</button>
+            </div>
+
+            {/* Sales Grid */}
+            <div className="flex-grow overflow-y-auto custom-scrollbar px-12 py-10">
+              {allSales.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center opacity-40">
+                  <span className="text-8xl mb-4">📭</span>
+                  <p className="text-slate-400 font-black uppercase tracking-widest">Aucune vente enregistrée</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {allSales.map(sale => (
+                    <div key={sale.id} className="bg-white rounded-[3rem] border-2 border-slate-100 p-8 shadow-md hover:shadow-xl transition-all duration-500 flex flex-col h-full">
+                      {/* Sale Number & Date */}
+                      <div className="flex justify-between items-start mb-6 pb-6 border-b border-slate-100">
+                        <div>
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Facture N°</p>
+                          <p className="text-lg font-black text-slate-900 mt-1">#VNT-{sale.id?.slice(0, 8).toUpperCase()}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Date de Vente</p>
+                          <p className="text-sm font-bold text-slate-600 mt-1">{new Date(sale.created_at!).toLocaleDateString('fr-FR')}</p>
+                        </div>
+                      </div>
+
+                      {/* Vehicle Information */}
+                      {sale.car && (
+                        <div className="mb-6 pb-6 border-b border-slate-100">
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">🚗 Véhicule</p>
+                          <div className="space-y-2">
+                            <p className="text-lg font-black text-slate-900">{sale.car.make} {sale.car.model}</p>
+                            <div className="flex gap-4 text-sm font-bold text-slate-600">
+                              <span>Année: {sale.car.year}</span>
+                              <span>•</span>
+                              <span>VIN: {sale.car.vin?.slice(-6).toUpperCase()}</span>
+                            </div>
+                            <div className="text-xs font-bold text-slate-500 mt-2">
+                              {sale.car.fuel} • {sale.car.transmission} • {sale.car.mileage.toLocaleString()} KM
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Client Information */}
+                      <div className="mb-6 pb-6 border-b border-slate-100">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">👤 Client</p>
+                        <div className="space-y-3">
+                          <div>
+                            <p className="text-sm font-black text-slate-900">{sale.last_name} {sale.first_name}</p>
+                          </div>
+                          <div className="space-y-1 text-xs">
+                            <p className="text-slate-600"><span className="font-bold">Mobile:</span> {sale.mobile1}</p>
+                            {sale.mobile2 && <p className="text-slate-600"><span className="font-bold">Mobile 2:</span> {sale.mobile2}</p>}
+                            {sale.address && <p className="text-slate-600"><span className="font-bold">Adresse:</span> {sale.address}</p>}
+                            {sale.profession && <p className="text-slate-600"><span className="font-bold">Profession:</span> {sale.profession}</p>}
+                          </div>
+                          {(sale.nif || sale.rc) && (
+                            <div className="text-xs text-slate-600 mt-2">
+                              {sale.nif && <p><span className="font-bold">NIF:</span> {sale.nif}</p>}
+                              {sale.rc && <p><span className="font-bold">RC:</span> {sale.rc}</p>}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Financial Information */}
+                      <div className="mb-6 pb-6 border-b border-slate-100">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">💰 Financier</p>
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-bold text-slate-600">Prix Total:</span>
+                            <span className="text-lg font-black text-blue-600">{sale.total_price.toLocaleString()} DA</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-bold text-slate-600">Montant Payé:</span>
+                            <span className="text-lg font-black text-green-600">{sale.amount_paid.toLocaleString()} DA</span>
+                          </div>
+                          <div className={`flex justify-between items-center pt-3 border-t ${sale.balance > 0 ? 'border-red-100' : 'border-green-100'}`}>
+                            <span className="text-sm font-bold text-slate-600">Solde:</span>
+                            <span className={`text-lg font-black ${sale.balance > 0 ? 'text-red-600' : 'text-green-600'}`}>{sale.balance.toLocaleString()} DA</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Status Badge */}
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Statut</p>
+                          <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase ${sale.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                            {sale.status === 'completed' ? '✅ Complétée' : '⏳ Detteurs'}
+                          </span>
+                        </div>
+                        <button 
+                          onClick={() => setPrintingSale(sale as any)}
+                          className="px-6 py-3 rounded-2xl bg-blue-600 text-white font-black text-[10px] uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg"
+                        >
+                          Voir Facture
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-12 py-8 bg-slate-50 border-t border-slate-100 flex justify-end shrink-0">
+              <button onClick={() => setShowSalesHistory(false)} className="px-10 py-4 rounded-2xl bg-slate-900 text-white font-black uppercase text-xs tracking-widest hover:bg-slate-800 transition-all">
+                Fermer
+              </button>
+            </div>
           </div>
         </div>
       )}
