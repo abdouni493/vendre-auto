@@ -283,7 +283,7 @@ const SupplierForm: React.FC<{ lang: Language, onClose: () => void, onSubmit: (d
               </div>
               <div className="w-full space-y-6">
                 <FormField label="CODE FOURNISSEUR" name="code" value={formData.code} disabled icon="🏷️" />
-                <FormField label="NOM COMPLET" name="name" value={formData.name} onChange={(e:any) => setFormData({...formData, name: e.target.value})} icon="🖋️" />
+                <FormField label="🖋️ NOM COMPLET" name="name" value={formData.name} onChange={(e:any) => setFormData({...formData, name: e.target.value})} />
               </div>
             </div>
 
@@ -294,26 +294,30 @@ const SupplierForm: React.FC<{ lang: Language, onClose: () => void, onSubmit: (d
                      <FormField label="Date de naissance" name="dob" type="date" value={formData.dob} onChange={(e:any) => setFormData({...formData, dob: e.target.value})} />
                      <FormField label="Lieu de naissance" name="pob" value={formData.pob} onChange={(e:any) => setFormData({...formData, pob: e.target.value})} />
                      <div className="md:col-span-2">
-                        <FormField label="Adresse de résidence" name="address" value={formData.address} onChange={(e:any) => setFormData({...formData, address: e.target.value})} icon="🏠" />
+                        <FormField label="🏠 Adresse de résidence" name="address" value={formData.address} onChange={(e:any) => setFormData({...formData, address: e.target.value})} />
                      </div>
                   </div>
                </SectionBox>
 
                <SectionBox title="Coordonnées de Contact" icon="📱">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                     <FormField label="N° Mobile Principal" name="mobile" value={formData.mobile} onChange={(e:any) => setFormData({...formData, mobile: e.target.value})} icon="📞" />
-                     <FormField label="N° Téléphone Secondaire" name="phone2" value={formData.phone2} onChange={(e:any) => setFormData({...formData, phone2: e.target.value})} icon="☎️" />
+                     <FormField label="📱 N° Mobile Principal" name="mobile" value={formData.mobile} onChange={(e:any) => setFormData({...formData, mobile: e.target.value})} />
+                     <FormField label="☎️ N° Téléphone Secondaire" name="phone2" value={formData.phone2} onChange={(e:any) => setFormData({...formData, phone2: e.target.value})} />
                   </div>
                </SectionBox>
 
-               <SectionBox title="Données Fiscales & Légales" icon="⚖️">
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+               <details className="bg-[#fcfcfc]/80 rounded-[3.5rem] p-10 space-y-8 border border-slate-100/50 group">
+                  <summary className="cursor-pointer flex items-center gap-6">
+                     <div className="h-12 w-12 rounded-2xl bg-white text-slate-900 flex items-center justify-center text-2xl shadow-sm border border-slate-100">⚖️</div>
+                     <h4 className="text-xl font-black text-slate-800 tracking-tight">Données Fiscales & Légales <span className="text-xs font-bold text-slate-400">(Optionnel)</span></h4>
+                  </summary>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 pt-6">
                      <FormField label="ART" name="art" value={formData.art} onChange={(e:any) => setFormData({...formData, art: e.target.value})} />
                      <FormField label="NIF" name="nif" value={formData.nif} onChange={(e:any) => setFormData({...formData, nif: e.target.value})} />
                      <FormField label="RC" name="rc" value={formData.rc} onChange={(e:any) => setFormData({...formData, rc: e.target.value})} />
                      <FormField label="NIS" name="nis" value={formData.nis} onChange={(e:any) => setFormData({...formData, nis: e.target.value})} />
                   </div>
-               </SectionBox>
+               </details>
             </div>
           </div>
         </div>
