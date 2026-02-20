@@ -180,6 +180,19 @@ export interface Expense {
   date: string;
 }
 
+export interface VehicleExpense {
+  id: string;
+  vehicle_id: string;
+  vehicle_name: string;
+  vehicle_make: string;
+  vehicle_model: string;
+  name: string;
+  cost: number;
+  date: string;
+  note?: string;
+  created_at?: string;
+}
+
 export interface Maintenance {
   id: string;
   vehicleId: string;
