@@ -458,6 +458,7 @@ const VehicleExpenseForm: React.FC<{
         <div className="flex justify-end gap-6 pt-12 mt-6">
           <button onClick={onClose} className="px-10 py-5 rounded-[2rem] font-black uppercase text-xs">Annuler</button>
           <button onClick={handleSubmit} className="custom-gradient-btn px-20 py-6 rounded-[2rem] text-white font-black uppercase text-xs">Enregistrer</button>
+        </div>
       </div>
     </div>
   );
