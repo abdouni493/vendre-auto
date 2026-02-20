@@ -48,16 +48,32 @@ export const Billing: React.FC<BillingProps> = ({ lang }) => {
   const [printDesign, setPrintDesign] = useState<InvoiceDesign>(defaultInvoiceDesign);
   const [selectedElement, setSelectedElement] = useState<{ type: EditableField; id?: string }>({ type: 'none' });
   const [inventory, setInventory] = useState<PurchaseRecord[]>([]);
+  const [showroom, setShowroom] = useState<any>({
+    name: 'AutoLux Premium',
+    slogan: 'Excellence Automobile',
+    address: 'Alger, Algérie',
+    facebook: '',
+    instagram: '@autolux_dz',
+    whatsapp: '',
+    logo_data: ''
+  });
 
   // Payment Modal States
   const [payingSale, setPayingSale] = useState<any | null>(null);
   const [newPaymentAmount, setNewPaymentAmount] = useState<number>(0);
   const [isUpdatingPayment, setIsUpdatingPayment] = useState(false);
+  const [showPrintPreview, setShowPrintPreview] = useState(false);
 
   useEffect(() => {
     fetchHistory();
     fetchInventory();
+    fetchShowroom();
   }, []);
+
+  const fetchShowroom = async () => {
+    const { data } = await supabase.from('showroom_config').select('*').eq('id', 1).maybeSingle();
+    if (data) setShowroom(data);
+  };
 
   const fetchInventory = async () => {
     const { data } = await supabase.from('purchases').select('*');
@@ -164,6 +180,7 @@ export const Billing: React.FC<BillingProps> = ({ lang }) => {
 
       setPayingSale(null);
       setNewPaymentAmount(0);
+      setShowPrintPreview(true);
       fetchHistory();
     } catch (err: any) {
       alert(`Erreur de paiement : ${err.message}`);
@@ -442,7 +459,11 @@ export const Billing: React.FC<BillingProps> = ({ lang }) => {
                      style={{ transform: `translate(${printDesign.logoPosition.x}px, ${printDesign.logoPosition.y}px)` }} 
                      className={`cursor-pointer transition-all ${selectedElement.type === 'logo' ? 'ring-4 ring-blue-500 ring-offset-4' : 'hover:opacity-70'}`}
                    >
-                      <div className="w-24 h-24 bg-slate-900 rounded-[2rem] flex items-center justify-center text-5xl text-white shadow-xl">🏎️</div>
+                      {showroom.logo_data ? (
+                        <img src={showroom.logo_data} className="w-24 h-24 object-contain shadow-xl rounded-[2rem]" alt="Logo" />
+                      ) : (
+                        <div className="w-24 h-24 bg-slate-900 rounded-[2rem] flex items-center justify-center text-5xl text-white shadow-xl">🏎️</div>
+                      )}
                    </div>
                    <div 
                      onClick={() => setSelectedElement({ type: 'title' })} 
@@ -450,7 +471,8 @@ export const Billing: React.FC<BillingProps> = ({ lang }) => {
                      className={`cursor-pointer transition-all mt-10 w-full text-center ${selectedElement.type === 'title' ? 'ring-4 ring-blue-500 ring-offset-4 bg-blue-50/30' : 'hover:opacity-70'}`}
                    >
                       <h1 style={{ color: printDesign.primaryColor }} className="text-4xl font-black uppercase tracking-tighter leading-none">{printDesign.labels.title}</h1>
-                      <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.4em] mt-3">AutoLux Premium Showroom - Excellence DZ</p>
+                      <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.4em] mt-3">{showroom.name} - {showroom.slogan}</p>
+                      <p className="text-slate-300 font-bold text-[9px] uppercase tracking-[0.3em] mt-1">{showroom.address}</p>
                    </div>
                 </div>
 
@@ -589,6 +611,66 @@ export const Billing: React.FC<BillingProps> = ({ lang }) => {
                 ))}
              </div>
            </div>
+        </div>
+      )}
+
+      {/* PRINT PREVIEW MODAL */}
+      {showPrintPreview && printingRecord && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-xl animate-in fade-in" onClick={() => setShowPrintPreview(false)}></div>
+          <div className="relative bg-white w-full max-w-2xl rounded-[4rem] p-12 shadow-2xl animate-in zoom-in-95 border border-white">
+            <div className="text-center mb-8">
+              <div className="h-20 w-20 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-4xl mx-auto mb-4 shadow-inner">📄</div>
+              <h3 className="text-3xl font-black text-slate-900 tracking-tight">Options d'Impression</h3>
+              <p className="text-slate-400 font-bold text-xs uppercase tracking-widest mt-2">Reçu de Versement</p>
+            </div>
+
+            <div className="space-y-6 mb-8">
+              <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                <div className="flex items-start gap-4">
+                  <div className="h-10 w-10 rounded-full bg-blue-600 text-white flex items-center justify-center text-lg font-black flex-shrink-0">1</div>
+                  <div>
+                    <p className="font-black text-slate-900 mb-1">Imprimer Directement</p>
+                    <p className="text-sm text-slate-600">Imprimer le reçu avec le modèle standard du showroom</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                <div className="flex items-start gap-4">
+                  <div className="h-10 w-10 rounded-full bg-purple-600 text-white flex items-center justify-center text-lg font-black flex-shrink-0">2</div>
+                  <div>
+                    <p className="font-black text-slate-900 mb-1">Personnaliser & Imprimer</p>
+                    <p className="text-sm text-slate-600">Modifier le design avant impression (logo, couleurs, texte)</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-6 pt-6 border-t border-slate-200">
+              <button 
+                onClick={() => setShowPrintPreview(false)}
+                className="py-5 px-6 rounded-2xl bg-slate-100 text-slate-900 font-black uppercase text-xs tracking-widest hover:bg-slate-200 transition-all"
+              >
+                ← Retour
+              </button>
+              <button 
+                onClick={() => { setShowPrintPreview(false); window.print(); }}
+                className="py-5 px-6 rounded-2xl bg-green-600 text-white font-black uppercase text-xs tracking-widest hover:bg-green-700 transition-all shadow-lg"
+              >
+                🖨️ Imprimer Directement
+              </button>
+            </div>
+
+            <div className="mt-6 pt-6 border-t border-slate-200">
+              <button 
+                onClick={() => setShowPrintPreview(false)}
+                className="w-full py-5 px-6 rounded-2xl bg-slate-900 text-white font-black uppercase text-xs tracking-widest hover:bg-slate-800 transition-all shadow-lg"
+              >
+                🎨 Personnaliser le Design
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
