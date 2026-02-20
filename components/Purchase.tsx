@@ -146,7 +146,8 @@ const PurchaseForm: React.FC<{ lang: Language; onClose: () => void; onSubmit: (d
   const [formData, setFormData] = useState<Partial<PurchaseRecord>>(initialData || {
     supplierId: '', supplierName: '', make: '', model: '', year: new Date().getFullYear().toString(),
     color: '', vin: '', fuel: 'essence', transmission: 'manuelle', seats: 5, doors: 5, mileage: 0,
-    insuranceExpiry: '', techControlDate: '', insuranceCompany: '', photos: [], totalCost: 0, sellingPrice: 0
+    insuranceExpiry: '', techControlDate: '', insuranceCompany: '', photos: [], totalCost: 0, sellingPrice: 0,
+    purchaseDateTime: new Date().toISOString().slice(0, 16)
   });
 
   useEffect(() => {
@@ -284,11 +285,28 @@ const PurchaseForm: React.FC<{ lang: Language; onClose: () => void; onSubmit: (d
               {/* SECTION 4: ADMINISTRATION */}
               <Section title="Administration" icon="📜">
                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <Field label="Expiration Assurance" name="insuranceExpiry" type="date" value={formData.insuranceExpiry} onChange={handleChange} />
-                    <Field label="Contrôle Technique" name="techControlDate" type="date" value={formData.techControlDate} onChange={handleChange} />
-                    <div className="sm:col-span-2">
-                       <Field label="Compagnie d'Assurance" name="insuranceCompany" value={formData.insuranceCompany} onChange={handleChange} placeholder="Ex: SAA, AXA..." />
-                    </div>
+                    <details className="sm:col-span-2 space-y-4">
+                      <summary className="cursor-pointer text-[10px] font-black text-slate-600 uppercase tracking-widest ml-3 pb-4 border-b border-slate-100">
+                        📋 Informations d'Assurance (Optionnel)
+                      </summary>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4">
+                        <Field label="Expiration Assurance" name="insuranceExpiry" type="date" value={formData.insuranceExpiry} onChange={handleChange} />
+                        <Field label="Contrôle Technique" name="techControlDate" type="date" value={formData.techControlDate} onChange={handleChange} />
+                        <div className="sm:col-span-2">
+                           <Field label="Compagnie d'Assurance" name="insuranceCompany" value={formData.insuranceCompany} onChange={handleChange} placeholder="Ex: SAA, AXA..." />
+                        </div>
+                      </div>
+                    </details>
+                    
+                    <details className="sm:col-span-2 space-y-4">
+                      <summary className="cursor-pointer text-[10px] font-black text-slate-600 uppercase tracking-widest ml-3 pb-4 border-b border-slate-100">
+                        ⏰ Date et Heure d'Achat
+                      </summary>
+                      <div className="pt-4">
+                        <Field label="Date & Heure d'Achat" name="purchaseDateTime" type="datetime-local" value={formData.purchaseDateTime} onChange={handleChange} />
+                      </div>
+                    </details>
+                    
                     <div className="sm:col-span-2 grid grid-cols-2 gap-6 pt-6 border-t border-slate-50">
                        <div className="space-y-2">
                           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-3">Investissement Initial (Achat)</label>

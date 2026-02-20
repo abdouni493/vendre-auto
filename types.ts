@@ -136,6 +136,7 @@ export interface PurchaseRecord {
   totalCost: number;
   sellingPrice: number;
   dateAdded: string;
+  purchaseDateTime?: string;
   is_sold?: boolean;
 }
 
