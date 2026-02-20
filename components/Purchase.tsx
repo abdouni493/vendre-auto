@@ -16,6 +16,7 @@ export const Purchase: React.FC<PurchaseProps> = ({ lang, initialEditRecord, onC
   const [loading, setLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<PurchaseRecord | null>(null);
+  const [detailsRecord, setDetailsRecord] = useState<PurchaseRecord | null>(null);
 
   useEffect(() => {
     fetchPurchases();
@@ -111,6 +112,12 @@ export const Purchase: React.FC<PurchaseProps> = ({ lang, initialEditRecord, onC
 
                <div className="flex gap-3 mt-auto">
                  <button 
+                   onClick={() => setDetailsRecord(p)} 
+                   className="flex-grow py-4.5 rounded-[1.5rem] bg-blue-500 text-white font-black text-[10px] uppercase tracking-widest transition-all hover:bg-blue-600"
+                 >
+                   👁️ Détails
+                 </button>
+                 <button 
                    onClick={() => { setEditingRecord(p); setIsFormOpen(true); }} 
                    className="flex-grow py-4.5 rounded-[1.5rem] bg-slate-900 text-white font-black text-[10px] uppercase tracking-widest transition-all hover:bg-blue-600"
                  >
@@ -134,6 +141,14 @@ export const Purchase: React.FC<PurchaseProps> = ({ lang, initialEditRecord, onC
           onClose={() => { setIsFormOpen(false); setEditingRecord(null); if(onClearEdit) onClearEdit(); }} 
           onSubmit={handleSave}
           initialData={editingRecord}
+        />
+      )}
+
+      {detailsRecord && (
+        <PurchaseDetailsModal 
+          purchase={detailsRecord}
+          onClose={() => setDetailsRecord(null)}
+          lang={lang}
         />
       )}
     </div>
@@ -348,6 +363,153 @@ const Section: React.FC<{ title: string; icon: string; children: React.ReactNode
         <h4 className="text-xl font-black text-slate-800 tracking-tight">{title}</h4>
      </div>
      <div>{children}</div>
+  </div>
+);
+
+// --- PURCHASE DETAILS MODAL ---
+const PurchaseDetailsModal: React.FC<{ purchase: PurchaseRecord; onClose: () => void; lang: Language }> = ({ purchase, onClose, lang }) => {
+  const t = translations[lang];
+  const profit = purchase.sellingPrice - purchase.totalCost;
+
+  return (
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-xl animate-in fade-in" onClick={onClose}></div>
+      <div className="relative bg-white w-full max-w-3xl rounded-[4rem] overflow-hidden shadow-2xl flex flex-col animate-in zoom-in-95 max-h-[90vh]">
+        
+        {/* Header */}
+        <div className="px-12 py-10 flex items-center justify-between bg-white border-b border-slate-100 shrink-0">
+          <div>
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight">
+              {purchase.make} {purchase.model}
+            </h2>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">Détails Complets de l'Achat</p>
+          </div>
+          <button onClick={onClose} className="h-14 w-14 bg-slate-50 rounded-full flex items-center justify-center text-2xl hover:bg-red-50 text-slate-400 transition-all">✕</button>
+        </div>
+
+        {/* Scrollable Content */}
+        <div className="flex-grow overflow-y-auto custom-scrollbar px-12 py-10 space-y-8">
+          
+          {/* Photos Gallery */}
+          {purchase.photos && purchase.photos.length > 0 && (
+            <div>
+              <h3 className="text-lg font-black text-slate-900 mb-4">📸 Photos du Véhicule</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {purchase.photos.map((photo, idx) => (
+                  <img key={idx} src={photo} alt={`Photo ${idx + 1}`} className="w-full h-40 object-cover rounded-2xl border border-slate-200 shadow-sm" />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Vehicle Information */}
+          <div>
+            <h3 className="text-lg font-black text-slate-900 mb-4">🚗 Informations Véhicule</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <DetailItem label="Marque" value={purchase.make} />
+              <DetailItem label="Modèle" value={purchase.model} />
+              <DetailItem label="Année" value={purchase.year} />
+              <DetailItem label="Couleur" value={purchase.color} />
+              <DetailItem label="Châssis (VIN)" value={purchase.vin} icon="🆔" />
+              <DetailItem label="Immatriculation" value={purchase.plate} icon="🔢" />
+              <DetailItem label="Carburant" value={purchase.fuel === 'essence' ? 'Essence' : 'Diesel'} />
+              <DetailItem label="Transmission" value={purchase.transmission === 'manuelle' ? 'Manuelle' : 'Automatique'} />
+              <DetailItem label="Kilométrage" value={`${purchase.mileage.toLocaleString()} KM`} />
+              <DetailItem label="Portes" value={purchase.doors.toString()} />
+              <DetailItem label="Places" value={purchase.seats.toString()} />
+            </div>
+          </div>
+
+          {/* Supplier Information */}
+          <div>
+            <h3 className="text-lg font-black text-slate-900 mb-4">🤝 Information Fournisseur</h3>
+            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200">
+              <p className="text-sm font-bold text-slate-900 mb-2">Nom du Fournisseur</p>
+              <p className="text-lg font-black text-blue-600">{purchase.supplierName}</p>
+            </div>
+          </div>
+
+          {/* Insurance & Technical Information */}
+          <div>
+            <h3 className="text-lg font-black text-slate-900 mb-4">📋 Informations d'Assurance & Technique</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <DetailItem label="Compagnie Assurance" value={purchase.insuranceCompany || 'N/A'} />
+              <DetailItem label="Expiration Assurance" value={purchase.insuranceExpiry ? new Date(purchase.insuranceExpiry).toLocaleDateString('fr-FR') : 'N/A'} icon="📅" />
+              <DetailItem label="Contrôle Technique" value={purchase.techControlDate ? new Date(purchase.techControlDate).toLocaleDateString('fr-FR') : 'N/A'} icon="📅" />
+            </div>
+          </div>
+
+          {/* Purchase Date & Time */}
+          {purchase.purchaseDateTime && (
+            <div>
+              <h3 className="text-lg font-black text-slate-900 mb-4">⏰ Date & Heure d'Achat</h3>
+              <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200">
+                <p className="text-sm font-bold text-slate-600 mb-2">Acheté le</p>
+                <p className="text-lg font-black text-slate-900">{new Date(purchase.purchaseDateTime).toLocaleDateString('fr-FR')} à {new Date(purchase.purchaseDateTime).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Financial Information */}
+          <div>
+            <h3 className="text-lg font-black text-slate-900 mb-4">💰 Informations Financières</h3>
+            <div className="space-y-4">
+              <div className="bg-red-50 p-6 rounded-2xl border border-red-200">
+                <p className="text-[10px] font-black text-red-600 uppercase tracking-widest mb-2">Coût d'Achat</p>
+                <p className="text-3xl font-black text-red-600">{purchase.totalCost.toLocaleString()} <span className="text-sm font-bold text-red-400">{t.currency}</span></p>
+              </div>
+              
+              <div className="bg-blue-50 p-6 rounded-2xl border border-blue-200">
+                <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-2">Prix de Vente Showroom</p>
+                <p className="text-3xl font-black text-blue-600">{purchase.sellingPrice.toLocaleString()} <span className="text-sm font-bold text-blue-400">{t.currency}</span></p>
+              </div>
+
+              <div className={`p-6 rounded-2xl border-2 ${profit >= 0 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                <p className={`text-[10px] font-black uppercase tracking-widest mb-2 ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {profit >= 0 ? 'Bénéfice Potentiel' : 'Perte Potentielle'}
+                </p>
+                <p className={`text-3xl font-black ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {Math.abs(profit).toLocaleString()} <span className="text-sm font-bold opacity-50">{t.currency}</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Additional Dates */}
+          <div>
+            <h3 className="text-lg font-black text-slate-900 mb-4">📍 Dates Importantes</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <DetailItem 
+                label="Date d'Ajout" 
+                value={purchase.dateAdded ? new Date(purchase.dateAdded).toLocaleDateString('fr-FR') : 'N/A'} 
+                icon="📅"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="px-12 py-8 bg-slate-50 border-t border-slate-100 flex justify-end gap-4 shrink-0">
+          <button 
+            onClick={onClose}
+            className="px-10 py-4 rounded-2xl bg-slate-900 text-white font-black text-[11px] uppercase tracking-widest hover:bg-slate-800 transition-all"
+          >
+            Fermer
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Detail Item Component
+const DetailItem: React.FC<{ label: string; value: string; icon?: string }> = ({ label, value, icon }) => (
+  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+      {icon && <span>{icon}</span>}
+      {label}
+    </p>
+    <p className="text-sm font-bold text-slate-900 truncate">{value}</p>
   </div>
 );
 
