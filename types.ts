@@ -82,6 +82,7 @@ export interface Supplier {
     amount: number;
   }[];
   created_at?: string;
+  created_by?: string;
 }
 
 export interface SaleRecord {
@@ -112,6 +113,8 @@ export interface SaleRecord {
   balance: number;
   status: 'completed' | 'debt';
   created_at?: string;
+  created_by?: string;
+  car?: PurchaseRecord;
 }
 
 export interface PurchaseRecord {
@@ -137,7 +140,9 @@ export interface PurchaseRecord {
   sellingPrice: number;
   dateAdded: string;
   purchaseDateTime?: string;
+  created_at?: string;
   is_sold?: boolean;
+  created_by?: string;
 }
 
 export interface InspectionRecord {
@@ -154,6 +159,7 @@ export interface InspectionRecord {
   note?: string;
   photos: any;
   partner_name: string;
+  created_by?: string;
 }
 
 export interface Worker {
@@ -165,12 +171,14 @@ export interface Worker {
   address?: string;
   id_card?: string;
   type: string;
+  role?: 'admin' | 'worker' | 'driver';
   payment_type: 'month' | 'day';
   amount: number;
   photo?: string;
   username?: string;
   password?: string;
   created_at?: string;
+  created_by?: string;
 }
 
 export interface Expense {
@@ -178,6 +186,7 @@ export interface Expense {
   name: string;
   cost: number;
   date: string;
+  created_by?: string;
 }
 
 export interface VehicleExpense {
@@ -191,6 +200,7 @@ export interface VehicleExpense {
   date: string;
   note?: string;
   created_at?: string;
+  created_by?: string;
 }
 
 export interface Maintenance {
@@ -203,6 +213,7 @@ export interface Maintenance {
   date: string;
   expiryDate?: string;
   note?: string;
+  created_by?: string;
 }
 
 export interface BillingRecord {

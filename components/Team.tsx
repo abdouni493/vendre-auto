@@ -36,7 +36,21 @@ export const Team: React.FC<TeamProps> = ({ lang }) => {
   const handleSaveWorker = async (data: any) => {
     try {
       const payload = { ...data };
-      delete payload.created_at; 
+      delete payload.created_at;
+      
+      // Ensure role and type are in sync
+      if (payload.role) {
+        payload.type = payload.role.charAt(0).toUpperCase() + payload.role.slice(1);
+      }
+      if (payload.type) {
+        payload.role = payload.type.toLowerCase();
+      }
+      
+      // Add created_by if it's a new worker
+      if (!data.id && !payload.created_by) {
+        const userName = localStorage.getItem('autolux_user_name') || 'admin';
+        payload.created_by = userName;
+      }
       
       if (data.id) {
         const { error } = await supabase.from('workers').update(payload).eq('id', data.id);
@@ -163,23 +177,57 @@ export const Team: React.FC<TeamProps> = ({ lang }) => {
 
 const WorkerCard = ({ worker, onAction, onDelete, onEdit, lang }: any) => {
   const t = translations[lang as Language];
+  
+  const getRoleEmoji = (role?: string) => {
+    switch(role) {
+      case 'admin': return '👑';
+      case 'driver': return '🚗';
+      case 'worker':
+      default: return '👨‍💼';
+    }
+  };
+
+  const getRoleColor = (role?: string) => {
+    switch(role) {
+      case 'admin': return 'bg-blue-50 text-blue-600';
+      case 'driver': return 'bg-orange-50 text-orange-600';
+      case 'worker':
+      default: return 'bg-green-50 text-green-600';
+    }
+  };
+
+  const getRoleLabel = (role?: string) => {
+    switch(role) {
+      case 'admin': return 'Admin';
+      case 'driver': return 'Driver';
+      case 'worker':
+      default: return 'Worker';
+    }
+  };
+
   return (
     <div className="bg-white rounded-[3.5rem] border border-slate-50 p-8 shadow-sm hover:shadow-2xl transition-all duration-700 flex flex-col group h-full relative">
       <div className="flex flex-col items-center mb-6">
         <div className="w-28 h-28 rounded-full bg-slate-50 border-4 border-white shadow-lg overflow-hidden flex items-center justify-center mb-4">
           {worker.photo ? <img src={worker.photo} className="w-full h-full object-cover" /> : <span className="text-5xl">👨‍🔧</span>}
         </div>
-        <h3 className="text-2xl font-black text-[#0f172a] text-center truncate w-full mb-1">{worker.fullname}</h3>
-        <span className="px-5 py-1.5 bg-blue-50 text-blue-600 rounded-full text-[9px] font-black uppercase tracking-widest">{worker.type.toUpperCase()}</span>
+        <h3 className="text-2xl font-black text-[#0f172a] text-center truncate w-full mb-2">{worker.fullname}</h3>
+        {worker.created_by && (
+          <p className="text-[10px] font-black text-slate-500 uppercase mb-2">👤 Créé par: {worker.created_by}</p>
+        )}
+        <div className={`px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-2 ${getRoleColor(worker.role)}`}>
+          <span className="text-lg">{getRoleEmoji(worker.role)}</span>
+          {getRoleLabel(worker.role)}
+        </div>
       </div>
 
       <div className="space-y-4 mb-8">
         <div className="flex items-center gap-4">
-          <span className="text-xl">📞</span>
+          <span className="text-2xl">📞</span>
           <p className="text-sm font-bold text-[#0f172a]">{worker.telephone}</p>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-xl">💰</span>
+          <span className="text-2xl">💰</span>
           <p className="text-sm font-bold text-blue-600">
             {Number(worker.amount || 0).toLocaleString()} {t.currency} <span className="text-[10px] text-slate-400 font-medium">/ {worker.payment_type === 'month' ? 'Mois' : 'Jour'}</span>
           </p>
@@ -187,15 +235,15 @@ const WorkerCard = ({ worker, onAction, onDelete, onEdit, lang }: any) => {
       </div>
 
       <div className="grid grid-cols-2 gap-3 mb-6">
-        <button onClick={() => onAction('payment')} className="bg-[#2563eb] text-white py-4 rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-lg">PAIEMENT</button>
-        <button onClick={() => onAction('advance')} className="bg-[#fffbeb] text-[#b45309] py-4 rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-[#fef3c7] transition-all">AVANCE</button>
-        <button onClick={() => onAction('absences')} className="bg-[#fef2f2] text-[#ef4444] py-4 rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-[#fee2e2] transition-all">ABSENCES</button>
-        <button onClick={() => onAction('history')} className="bg-[#0f172a] text-white py-4 rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-800 transition-all shadow-lg">HISTORIQUE</button>
+        <button onClick={() => onAction('payment')} className="bg-blue-600 text-white py-4 rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-lg">💸 Paiement</button>
+        <button onClick={() => onAction('advance')} className="bg-amber-400 text-amber-900 py-4 rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-amber-500 transition-all shadow-lg">💎 Avance</button>
+        <button onClick={() => onAction('absences')} className="bg-red-500 text-white py-4 rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-red-600 transition-all shadow-lg">🚫 Absences</button>
+        <button onClick={() => onAction('history')} className="bg-slate-900 text-white py-4 rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-800 transition-all shadow-lg">📋 Historique</button>
       </div>
 
       <div className="flex items-center gap-3 pt-4 border-t border-slate-50 mt-auto">
-        <button onClick={onEdit} className="flex-grow bg-white border border-slate-100 text-slate-400 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-50">MODIFIER</button>
-        <button onClick={onDelete} className="h-12 w-12 rounded-2xl bg-[#fef2f2] flex items-center justify-center text-[#ef4444] hover:bg-red-500 hover:text-white transition-all shadow-sm">🗑️</button>
+        <button onClick={onEdit} className="flex-grow bg-white border border-slate-200 text-slate-600 py-3 rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-50 transition-all">✏️ Modifier</button>
+        <button onClick={onDelete} className="h-12 w-12 rounded-2xl bg-red-50 flex items-center justify-center text-xl hover:bg-red-500 hover:shadow-lg transition-all">🗑️</button>
       </div>
     </div>
   );
@@ -205,7 +253,7 @@ const WorkerFormModal = ({ lang, initialData, onClose, onSubmit }: any) => {
   const t = translations[lang as Language];
   const [formData, setFormData] = useState<Partial<Worker>>(initialData || {
     fullname: '', birthday: '', telephone: '', email: '', address: '', id_card: '',
-    type: 'Worker', payment_type: 'month', amount: 0, username: '', password: '', photo: ''
+    type: 'Worker', role: 'worker', payment_type: 'month', amount: 0, username: '', password: '', photo: ''
   });
 
   const handlePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -263,6 +311,28 @@ const WorkerFormModal = ({ lang, initialData, onClose, onSubmit }: any) => {
                     <SelectFieldBox label="TYPE DE PAIEMENT" name="payment_type" value={formData.payment_type} onChange={(e:any) => setFormData({...formData, payment_type: e.target.value as any})} options={[{label:'Par mois', value:'month'}, {label:'Par jour', value:'day'}]} />
                     <FieldBox label="USERNAME" name="username" value={formData.username} onChange={(e:any) => setFormData({...formData, username: e.target.value})} />
                     <FieldBox label="PASSWORD" name="password" type="password" value={formData.password} onChange={(e:any) => setFormData({...formData, password: e.target.value})} />
+                  </div>
+               </SectionBox>
+
+               <SectionBox title="Rôle & Permissions" icon="🔐">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <label className="relative flex items-center cursor-pointer group">
+                      <input type="radio" name="role" value="admin" checked={formData.role === 'admin'} onChange={(e) => setFormData({...formData, role: e.target.value as any})} className="sr-only" />
+                      <div className={`flex-1 p-6 rounded-[2rem] border-2 transition-all ${formData.role === 'admin' ? 'border-blue-500 bg-blue-50' : 'border-slate-100 bg-white'}`}>
+                        <div className="text-3xl mb-2">👑</div>
+                        <div className="font-black uppercase text-[10px] text-slate-900">Admin</div>
+                        <div className="text-[9px] text-slate-500 mt-1">Accès complet</div>
+                      </div>
+                    </label>
+                    <label className="relative flex items-center cursor-pointer group">
+                      <input type="radio" name="role" value="worker" checked={formData.role === 'worker'} onChange={(e) => setFormData({...formData, role: e.target.value as any})} className="sr-only" />
+                      <div className={`flex-1 p-6 rounded-[2rem] border-2 transition-all ${formData.role === 'worker' ? 'border-green-500 bg-green-50' : 'border-slate-100 bg-white'}`}>
+                        <div className="text-3xl mb-2">👨‍💼</div>
+                        <div className="font-black uppercase text-[10px] text-slate-900">Worker</div>
+                        <div className="text-[9px] text-slate-500 mt-1">Accès limité</div>
+                      </div>
+                    </label>
+                    
                   </div>
                </SectionBox>
             </div>

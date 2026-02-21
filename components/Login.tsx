@@ -9,9 +9,11 @@ interface LoginProps {
   onLogin: (role: Role) => void;
   lang: Language;
   showroomLogo?: string;
+  showroomName?: string;
+  showroomSlogan?: string;
 }
 
-export const Login: React.FC<LoginProps> = ({ onLogin, lang, showroomLogo }) => {
+export const Login: React.FC<LoginProps> = ({ onLogin, lang, showroomLogo, showroomName, showroomSlogan }) => {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -24,17 +26,19 @@ export const Login: React.FC<LoginProps> = ({ onLogin, lang, showroomLogo }) => 
     setError(null);
 
     try {
-      const { data: workerData } = await supabase.from('workers').select('id, type, fullname').or(`username.eq."${identifier}",email.eq."${identifier}"`).eq('password', password).maybeSingle();
+      const { data: workerData } = await supabase.from('workers').select('id, role, type, fullname, username').or(`username.eq."${identifier}",email.eq."${identifier}"`).eq('password', password).maybeSingle();
       if (workerData) {
-        localStorage.setItem('autolux_role', workerData.type.toLowerCase());
-        localStorage.setItem('autolux_user_name', workerData.fullname);
-        onLogin(workerData.type.toLowerCase() as Role);
+        // Use role if available, otherwise fall back to type
+        const userRole = (workerData.role || workerData.type || 'worker').toLowerCase();
+        localStorage.setItem('autolux_role', userRole);
+        localStorage.setItem('autolux_user_name', workerData.fullname || workerData.username);
+        onLogin(userRole as Role);
         return;
       }
 
       let loginEmail = identifier;
       if (!identifier.includes('@')) {
-        const { data: profileLookup } = await supabase.from('profiles').select('email').eq('username', identifier).maybeSingle();
+        const { data: profileLookup } = await supabase.from('profiles').select('email, username').eq('username', identifier).maybeSingle();
         if (profileLookup?.email) loginEmail = profileLookup.email;
         else throw new Error("Identifiants invalides.");
       }
@@ -43,9 +47,10 @@ export const Login: React.FC<LoginProps> = ({ onLogin, lang, showroomLogo }) => 
       if (authError) throw new Error("Identifiants invalides.");
 
       if (data.user) {
-        const { data: profileData } = await supabase.from('profiles').select('role').eq('id', data.user.id).maybeSingle();
+        const { data: profileData } = await supabase.from('profiles').select('role, username').eq('id', data.user.id).maybeSingle();
         const role = (profileData?.role as Role) || 'admin';
         localStorage.setItem('autolux_role', role);
+        localStorage.setItem('autolux_user_name', profileData?.username || identifier);
         onLogin(role);
       }
     } catch (err: any) {
@@ -64,8 +69,8 @@ export const Login: React.FC<LoginProps> = ({ onLogin, lang, showroomLogo }) => 
             <div className="h-24 w-24 rounded-[2.5rem] bg-slate-900 mx-auto mb-6 flex items-center justify-center shadow-xl overflow-hidden">
               {showroomLogo ? <img src={showroomLogo} className="w-full h-full object-cover" /> : <span className="text-4xl">🏎️</span>}
             </div>
-            <h1 className="text-4xl font-black tracking-tighter text-slate-900">AutoLux</h1>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mt-2">Management Cloud</p>
+            <h1 className="text-4xl font-black tracking-tighter text-slate-900">{showroomName || 'AutoLux'}</h1>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mt-2">{showroomSlogan || 'Management Cloud'}</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">

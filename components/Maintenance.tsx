@@ -66,7 +66,7 @@ export const Maintenance: React.FC<MaintenanceProps> = ({ lang }) => {
             }`}></div>
             
             <div className="flex justify-between items-start mb-10 relative z-10">
-              <div className="flex items-center gap-5">
+              <div className="flex items-center gap-5 flex-grow">
                  <div className={`h-20 w-20 rounded-[2.2rem] flex items-center justify-center text-4xl transition-all duration-700 shadow-inner group-hover:scale-110 group-hover:rotate-6 ${
                    r.type === 'vidange' ? 'bg-amber-50 text-amber-500' : 
                    r.type === 'assurance' ? 'bg-purple-50 text-purple-500' : 
@@ -75,8 +75,11 @@ export const Maintenance: React.FC<MaintenanceProps> = ({ lang }) => {
                  }`}>
                     {r.type === 'vidange' ? '🛢️' : r.type === 'assurance' ? '🛡️' : r.type === 'controle' ? '🔍' : '⚙️'}
                  </div>
-                 <div className="flex flex-col">
+                 <div className="flex flex-col flex-grow">
                     <h3 className="text-2xl font-black text-slate-900 tracking-tight leading-tight group-hover:text-blue-600 transition-colors">{r.vehicleName}</h3>
+                    {r.created_by && (
+                      <p className="text-[9px] font-black text-slate-500 uppercase mt-1">👤 Créé par: {r.created_by}</p>
+                    )}
                     <span className={`text-[10px] font-black uppercase tracking-[0.2em] mt-1.5 flex items-center gap-2 ${
                       r.type === 'assurance' ? 'text-purple-500' : 
                       r.type === 'vidange' ? 'text-amber-500' : 

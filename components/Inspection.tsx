@@ -39,6 +39,7 @@ export const Inspection: React.FC<InspectionProps> = ({ lang }) => {
   const [inspections, setInspections] = useState<InspectionRecord[]>([]);
   const [inventory, setInventory] = useState<PurchaseRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showCreatedDate, setShowCreatedDate] = useState(false);
   
   // UI States
   const [isWizardOpen, setIsWizardOpen] = useState(false);
@@ -185,12 +186,20 @@ export const Inspection: React.FC<InspectionProps> = ({ lang }) => {
             Surveillance Active
           </p>
         </div>
-        <button 
-          onClick={() => { setEditingRecord(null); setFormData(initialFormState); setWizardStep(1); setIsWizardOpen(true); }}
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => setShowCreatedDate(!showCreatedDate)}
+            className={`px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${showCreatedDate ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+          >
+            📅 {showCreatedDate ? 'Masquer' : 'Afficher'} Date Création
+          </button>
+          <button 
+            onClick={() => { setEditingRecord(null); setFormData(initialFormState); setWizardStep(1); setIsWizardOpen(true); }}
           className="custom-gradient-btn px-10 py-5 rounded-[2.5rem] text-white font-black text-sm shadow-2xl active:scale-95 transition-all flex items-center gap-4 group"
         >
           <span className="text-2xl group-hover:rotate-90 transition-transform duration-500">📋</span> Nouveau Dossier
         </button>
+        </div>
       </div>
 
       {/* Main Grid */}
@@ -202,6 +211,7 @@ export const Inspection: React.FC<InspectionProps> = ({ lang }) => {
             onEdit={() => { setEditingRecord(insp); setFormData(insp); setWizardStep(1); setIsWizardOpen(true); }} 
             onView={() => setViewingRecord(insp)} 
             onPrint={() => setPrintingRecord(insp)}
+            showCreatedDate={showCreatedDate}
           />
         ))}
       </div>
@@ -557,13 +567,18 @@ export const Inspection: React.FC<InspectionProps> = ({ lang }) => {
 
 // --- SUB-COMPONENTS ---
 
-const InspectionCard = ({ inspection, onEdit, onView, onPrint }: any) => (
+const InspectionCard = ({ inspection, onEdit, onView, onPrint, showCreatedDate }: any) => (
   <div className="bg-white rounded-[4rem] border border-slate-100 p-10 shadow-sm hover:shadow-2xl transition-all duration-700 flex flex-col group h-full">
     <div className="flex justify-between items-start mb-8">
       <span className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border-2 ${inspection.type === 'checkin' ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-purple-50 text-purple-600 border-purple-100'}`}>
         {inspection.type === 'checkin' ? 'Check-In' : 'Check-Out'}
       </span>
-      <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">{inspection.date}</p>
+      <div className="text-right">
+        <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">{inspection.date}</p>
+        {showCreatedDate && inspection.created_at && (
+          <p className="text-[9px] font-black text-blue-600 uppercase tracking-widest">📅 {new Date(inspection.created_at).toLocaleDateString('fr-FR')}</p>
+        )}
+      </div>
     </div>
     <h3 className="text-2xl font-black text-slate-900 mb-1 line-clamp-1 tracking-tighter">{inspection.carName}</h3>
     <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-10">{inspection.vin}</p>
@@ -574,6 +589,12 @@ const InspectionCard = ({ inspection, onEdit, onView, onPrint }: any) => (
       </div>
       <div className="h-px bg-slate-200/50"></div>
       <p className="text-[11px] font-bold text-slate-500 truncate italic">👤 Opérateur : {inspection.partnerName}</p>
+      {inspection.created_by && (
+        <>
+          <div className="h-px bg-slate-200/50"></div>
+          <p className="text-[11px] font-bold text-slate-600 truncate">📋 Créé par : {inspection.created_by}</p>
+        </>
+      )}
     </div>
     <div className="grid grid-cols-3 gap-2">
       <button onClick={onView} className="bg-slate-900 text-white py-5 rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 transition-all shadow-lg active:scale-95">👀 Voir</button>

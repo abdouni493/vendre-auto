@@ -6,13 +6,14 @@ import { translations } from '../translations';
 interface NavbarProps {
   lang: Language;
   role: Role;
+  userName?: string;
   onToggleLang: () => void;
   onLogout: () => void;
   onToggleSidebar: () => void;
   isSidebarOpen: boolean;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ lang, role, onToggleLang, onLogout, onToggleSidebar, isSidebarOpen }) => {
+export const Navbar: React.FC<NavbarProps> = ({ lang, role, userName, onToggleLang, onLogout, onToggleSidebar, isSidebarOpen }) => {
   const t = translations[lang];
   const isRtl = lang === 'ar';
 
@@ -35,7 +36,7 @@ export const Navbar: React.FC<NavbarProps> = ({ lang, role, onToggleLang, onLogo
               {role} Portal
             </h2>
             <p className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">
-              Live Connection
+              {userName ? `👤 ${userName}` : 'Live Connection'}
             </p>
           </div>
         </div>
@@ -52,11 +53,11 @@ export const Navbar: React.FC<NavbarProps> = ({ lang, role, onToggleLang, onLogo
 
           <div className="flex items-center space-x-2 md:space-x-3 gap-2">
             <div className="text-right hidden lg:block">
-              <p className="text-xs font-black text-slate-800 uppercase tracking-tighter leading-none">{role}</p>
+              <p className="text-xs font-black text-slate-800 uppercase tracking-tighter leading-none">{userName || role}</p>
               <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">Online Now</p>
             </div>
             <div className="h-10 w-10 md:h-11 md:w-11 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-xl shadow-blue-500/20 border-2 border-white ring-1 ring-slate-100">
-              {role?.charAt(0).toUpperCase()}
+              {(userName || role)?.charAt(0).toUpperCase()}
             </div>
             <button
               onClick={onLogout}

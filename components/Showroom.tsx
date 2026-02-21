@@ -21,6 +21,7 @@ export const Showroom: React.FC<ShowroomProps> = ({ lang, onNavigateToPurchase, 
   const [selectedCar, setSelectedCar] = useState<PurchaseRecord | null>(null);
   const [saleDetails, setSaleDetails] = useState<SaleWithDetails | null>(null);
   const [saleLoading, setSaleLoading] = useState(false);
+  const [showCreatedDate, setShowCreatedDate] = useState(false);
 
   useEffect(() => {
     fetchInventory();
@@ -79,9 +80,17 @@ export const Showroom: React.FC<ShowroomProps> = ({ lang, onNavigateToPurchase, 
           <h2 className="text-4xl font-black text-slate-900">{t.menu.showroom}</h2>
           <p className="text-slate-400 font-bold text-xs uppercase mt-3">Disponibilités en Temps Réel</p>
         </div>
-        <button onClick={onNavigateToPurchase} className="custom-gradient-btn px-10 py-5 rounded-[2.5rem] text-white font-black text-sm">
-          🏷️ {t.purchase.addBtn}
-        </button>
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => setShowCreatedDate(!showCreatedDate)}
+            className={`px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${showCreatedDate ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+          >
+            📅 {showCreatedDate ? 'Masquer' : 'Afficher'} Date Création
+          </button>
+          <button onClick={onNavigateToPurchase} className="custom-gradient-btn px-10 py-5 rounded-[2.5rem] text-white font-black text-sm">
+            🏷️ {t.purchase.addBtn}
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
@@ -98,16 +107,28 @@ export const Showroom: React.FC<ShowroomProps> = ({ lang, onNavigateToPurchase, 
               </span>
             </div>
 
-            <div className="h-72 overflow-hidden">
+            <div className="h-72 overflow-hidden relative">
                <img src={car.photos?.[0] || 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&q=80&w=1000'} className="w-full h-full object-cover" alt={car.model} />
+               {showCreatedDate && car.created_at && (
+                  <div className="absolute bottom-6 left-6 bg-blue-600/90 backdrop-blur-md px-3 py-1.5 rounded-full">
+                    <span className="text-[9px] font-black text-white uppercase tracking-widest">📅 {new Date(car.created_at).toLocaleDateString('fr-FR')}</span>
+                  </div>
+               )}
             </div>
             <div className="p-10 flex flex-col flex-grow">
                <h3 className="text-3xl font-black text-slate-900 leading-none mb-2">{car.make}</h3>
                <p className="text-xl font-bold text-slate-400 tracking-tight mb-8">{car.model}</p>
+               
+               {car.created_by && (
+                  <div className="text-[10px] font-black text-slate-600 uppercase mb-4">
+                    👤 Créé par: <span className="text-slate-800">{car.created_by}</span>
+                  </div>
+               )}
+               
                <div className="flex justify-between items-end mb-10">
                   <div>
                      <p className="text-[10px] font-black text-slate-300 uppercase">Prix de Vente</p>
-                     <p className="text-3xl font-black text-blue-600 tracking-tighter">{car.sellingPrice?.toLocaleString()} <span className="text-sm font-bold text-slate-400">{t.currency}</span></p>
+                     <p className="text-3xl font-black text-blue-600 tracking-tighter">{(car.sellingPrice || car.selling_price)?.toLocaleString()} <span className="text-sm font-bold text-slate-400">{t.currency}</span></p>
                   </div>
                   <div className="bg-slate-50 px-4 py-2 rounded-2xl border">
                      <span className="text-xs font-black text-slate-900">{car.year}</span>

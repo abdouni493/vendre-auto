@@ -43,11 +43,29 @@ export const Suppliers: React.FC<SuppliersProps> = ({ lang }) => {
 
   const handleSubmit = async (data: Partial<Supplier>) => {
     try {
-      const payload = { ...data, idDocImages: data.idDocImages || [] };
+      // Convert camelCase to snake_case for database compatibility
+      const dbData = {
+        code: data.code,
+        name: data.name,
+        dob: data.dob || null,
+        pob: data.pob || '',
+        address: data.address || '',
+        art: data.art || '',
+        nif: data.nif || '',
+        rc: data.rc || '',
+        nis: data.nis || '',
+        mobile: data.mobile,
+        phone2: data.phone2 || '',
+        id_doc_type: data.idDocType || '',
+        id_doc_number: data.idDocNumber || '',
+        id_doc_images: data.idDocImages || [],
+        photo: data.photo || null
+      };
+
       if (editingSupplier) {
-        await supabase.from('suppliers').update(payload).eq('id', editingSupplier.id);
+        await supabase.from('suppliers').update(dbData).eq('id', editingSupplier.id);
       } else {
-        await supabase.from('suppliers').insert([payload]);
+        await supabase.from('suppliers').insert([dbData]);
       }
       await fetchSuppliers();
       setIsFormOpen(false);
@@ -98,6 +116,9 @@ export const Suppliers: React.FC<SuppliersProps> = ({ lang }) => {
                <h3 className="text-[28px] font-black text-[#0f172a] leading-tight tracking-tight truncate w-full">
                  {s.name}
                </h3>
+               {s.created_by && (
+                  <p className="text-[10px] font-black text-slate-500 uppercase mt-2">👤 Créé par: {s.created_by}</p>
+               )}
             </div>
 
             <div className="space-y-6 mb-10">

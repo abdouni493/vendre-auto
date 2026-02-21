@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Expense, Language, PurchaseRecord } from '../types';
 import { translations } from '../translations';
 import { supabase } from '../supabase';
+import { getCreatedByValue } from '../utils';
 
 interface VehicleExpense {
   id: string;
@@ -19,9 +20,10 @@ interface VehicleExpense {
 
 interface ExpensesProps {
   lang: Language;
+  userName?: string;
 }
 
-export const Expenses: React.FC<ExpensesProps> = ({ lang }) => {
+export const Expenses: React.FC<ExpensesProps> = ({ lang, userName }) => {
   const t = translations[lang];
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [vehicleExpenses, setVehicleExpenses] = useState<VehicleExpense[]>([]);
@@ -32,6 +34,7 @@ export const Expenses: React.FC<ExpensesProps> = ({ lang }) => {
   const [editingVehicleExpense, setEditingVehicleExpense] = useState<VehicleExpense | null>(null);
   const [activeTab, setActiveTab] = useState<'general' | 'vehicles'>('general');
   const [vehicles, setVehicles] = useState<PurchaseRecord[]>([]);
+  const [showCreatedDate, setShowCreatedDate] = useState(false);
 
   useEffect(() => {
     if (activeTab === 'general') {
@@ -79,10 +82,15 @@ export const Expenses: React.FC<ExpensesProps> = ({ lang }) => {
   };
 
   const handleSubmit = async (data: any) => {
+    // Auto-populate created_by if not already set
+    const dataWithCreatedBy = {
+      ...data,
+      created_by: data.created_by || getCreatedByValue()
+    };
     if (editingExpense) {
-      await supabase.from('expenses').update(data).eq('id', editingExpense.id);
+      await supabase.from('expenses').update(dataWithCreatedBy).eq('id', editingExpense.id);
     } else {
-      await supabase.from('expenses').insert([data]);
+      await supabase.from('expenses').insert([dataWithCreatedBy]);
     }
     fetchExpenses();
     setIsFormOpen(false);
@@ -90,10 +98,15 @@ export const Expenses: React.FC<ExpensesProps> = ({ lang }) => {
   };
 
   const handleVehicleExpenseSubmit = async (data: any) => {
+    // Auto-populate created_by if not already set
+    const dataWithCreatedBy = {
+      ...data,
+      created_by: data.created_by || getCreatedByValue()
+    };
     if (editingVehicleExpense) {
-      await supabase.from('vehicle_expenses').update(data).eq('id', editingVehicleExpense.id);
+      await supabase.from('vehicle_expenses').update(dataWithCreatedBy).eq('id', editingVehicleExpense.id);
     } else {
-      await supabase.from('vehicle_expenses').insert([data]);
+      await supabase.from('vehicle_expenses').insert([dataWithCreatedBy]);
     }
     fetchVehicleExpenses();
     setIsVehicleFormOpen(false);
@@ -179,20 +192,28 @@ export const Expenses: React.FC<ExpensesProps> = ({ lang }) => {
           <h2 className="text-4xl font-black text-slate-900">{t.expenses.title}</h2>
           <p className="text-slate-400 font-bold text-xs uppercase mt-3">Gestion des Charges</p>
         </div>
-        <button 
-          onClick={() => { 
-            if (activeTab === 'general') {
-              setEditingExpense(null);
-              setIsFormOpen(true);
-            } else {
-              setEditingVehicleExpense(null);
-              setIsVehicleFormOpen(true);
-            }
-          }}
-          className="custom-gradient-btn px-10 py-5 rounded-[2.5rem] text-white font-black text-sm shadow-2xl transition-all"
-        >
-          💰 {activeTab === 'general' ? t.expenses.add : '+ Nouvelle Charge Véhicule'}
-        </button>
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => setShowCreatedDate(!showCreatedDate)}
+            className={`px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${showCreatedDate ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+          >
+            📅 {showCreatedDate ? 'Masquer' : 'Afficher'} Date Création
+          </button>
+          <button 
+            onClick={() => { 
+              if (activeTab === 'general') {
+                setEditingExpense(null);
+                setIsFormOpen(true);
+              } else {
+                setEditingVehicleExpense(null);
+                setIsVehicleFormOpen(true);
+              }
+            }}
+            className="custom-gradient-btn px-10 py-5 rounded-[2.5rem] text-white font-black text-sm shadow-2xl transition-all"
+          >
+            💰 {activeTab === 'general' ? t.expenses.add : '+ Nouvelle Charge Véhicule'}
+          </button>
+        </div>
       </div>
 
       {/* Tab Navigation */}
@@ -226,6 +247,12 @@ export const Expenses: React.FC<ExpensesProps> = ({ lang }) => {
             <div key={ex.id} className="bg-white rounded-[4rem] border border-slate-100 p-10 shadow-sm hover:shadow-xl transition-all duration-700 flex flex-col relative overflow-hidden h-full">
               <div className="flex-grow mb-10">
                 <p className="text-[10px] font-black text-slate-300 uppercase mb-2">{ex.date}</p>
+                {showCreatedDate && ex.created_at && (
+                  <p className="text-[9px] font-black text-blue-600 uppercase mb-2">📅 Créé: {new Date(ex.created_at).toLocaleDateString('fr-FR')}</p>
+                )}
+                {ex.created_by && (
+                  <p className="text-[9px] font-black text-slate-600 uppercase mb-3">👤 Par: {ex.created_by}</p>
+                )}
                 <h3 className="text-2xl font-black text-slate-900 mb-3">{ex.name}</h3>
                 <p className="text-5xl font-black text-red-600 tracking-tighter">
                   {ex.cost.toLocaleString()} <span className="text-sm font-bold text-slate-400">{t.currency}</span>
@@ -250,6 +277,12 @@ export const Expenses: React.FC<ExpensesProps> = ({ lang }) => {
                 <p className="text-[10px] font-black text-slate-300 uppercase mb-2">🚗 {ex.vehicle_make} {ex.vehicle_model}</p>
                 <p className="text-[10px] font-black text-slate-400 mb-4">Plaque: {ex.vehicle_name}</p>
                 <p className="text-[10px] font-black text-slate-300 uppercase mb-2">{ex.date}</p>
+                {showCreatedDate && ex.created_at && (
+                  <p className="text-[9px] font-black text-blue-600 uppercase mb-2">📅 Créé: {new Date(ex.created_at).toLocaleDateString('fr-FR')}</p>
+                )}
+                {ex.created_by && (
+                  <p className="text-[9px] font-black text-slate-600 uppercase mb-3">👤 Par: {ex.created_by}</p>
+                )}
                 <h3 className="text-2xl font-black text-slate-900 mb-3">{ex.name}</h3>
                 <p className="text-5xl font-black text-red-600 tracking-tighter">
                   {ex.cost.toLocaleString()} <span className="text-sm font-bold text-slate-400">{t.currency}</span>

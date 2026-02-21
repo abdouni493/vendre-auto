@@ -18,23 +18,38 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, lang, role, activeItem
   const t = translations[lang];
   const isRtl = lang === 'ar';
 
-  const allMenuItems: MenuItem[] = [
+  // Admin menu - all items
+  const adminMenuItems: MenuItem[] = [
     { id: 'dashboard', label: t.menu.dashboard, icon: '📊', roles: ['admin'] },
     { id: 'showroom', label: t.menu.showroom, icon: '🏎️', roles: ['admin', 'worker', 'driver'] },
     { id: 'suppliers', label: t.menu.suppliers, icon: '🤝', roles: ['admin'] },
     { id: 'purchase', label: t.menu.purchase, icon: '🛒', roles: ['admin'] },
-    { id: 'pos', label: t.menu.pos, icon: '🏪', roles: ['admin'] },
-    { id: 'checkin', label: t.menu.checkin, icon: '🗝️', roles: ['admin', 'worker', 'driver'] },
+    { id: 'receipts', label: 'Reçus', icon: '📄', roles: ['admin'] },
+    { id: 'pos', label: t.menu.pos, icon: '🏪', roles: ['admin', 'worker'] },
     { id: 'team', label: t.menu.team, icon: '👥', roles: ['admin'] },
-    { id: 'billing', label: t.menu.billing, icon: '📄', roles: ['admin'] },
-    { id: 'expenses', label: t.menu.expenses, icon: '💸', roles: ['admin'] },
+    { id: 'billing', label: t.menu.billing, icon: '📄', roles: ['admin', 'worker'] },
+    { id: 'expenses', label: t.menu.expenses, icon: '💸', roles: ['admin', 'worker'] },
     { id: 'reports', label: t.menu.reports, icon: '📈', roles: ['admin'] },
     { id: 'ai', label: t.menu.ai, icon: '🤖', roles: ['admin'] },
   ];
 
-  const configItem: MenuItem = { id: 'config', label: t.menu.config, icon: '⚙️', roles: ['admin'] };
-  const filteredMenuItems = allMenuItems.filter(item => item.roles.includes(role));
-  const showConfig = configItem.roles.includes(role);
+  // Worker specific menu with payments history
+  const workerMenuItems: MenuItem[] = [
+    { id: 'dashboard', label: t.menu.dashboard, icon: '📊', roles: ['worker'] },
+    { id: 'showroom', label: t.menu.showroom, icon: '🏎️', roles: ['worker'] },
+    { id: 'suppliers', label: t.menu.suppliers, icon: '🤝', roles: ['worker'] },
+    { id: 'purchase', label: t.menu.purchase, icon: '🛒', roles: ['worker'] },
+    { id: 'pos', label: t.menu.pos, icon: '🏪', roles: ['worker'] },
+    { id: 'billing', label: t.menu.billing, icon: '📄', roles: ['worker'] },
+    { id: 'expenses', label: t.menu.expenses, icon: '💸', roles: ['worker'] },
+    { id: 'worker-payments', label: 'Historique Paiements', icon: '💳', roles: ['worker'] },
+  ];
+
+  // Determine which menu to use based on role
+  const allMenuItems = role === 'admin' ? adminMenuItems : workerMenuItems;
+  const configItem: MenuItem = { id: 'config', label: t.menu.config, icon: '⚙️', roles: ['admin', 'worker'] };
+  const filteredMenuItems = allMenuItems.filter(item => item.roles.includes(role || 'admin'));
+  const showConfig = configItem.roles.includes(role || 'admin');
 
   return (
     <>
@@ -61,6 +76,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, lang, role, activeItem
         </nav>
 
         {showConfig && (
+          <div className="p-4 border-t border-slate-100 mt-auto space-y-4">
+            {/* Config Button */}
+            <button
+              onClick={() => { onSelectItem(configItem.id); if (window.innerWidth < 1024) onClose(); }}
+              className={`w-full flex items-center rounded-2xl p-4 transition-all ${activeItem === configItem.id ? 'custom-gradient-btn text-white' : 'text-slate-500 hover:bg-slate-50'}`}
+            >
+              <span className="text-2xl min-w-[40px] flex justify-center">{configItem.icon}</span>
+              <span className="ml-3 font-bold">{configItem.label}</span>
+            </button>
+          </div>
+        ) || (
           <div className="p-4 border-t border-slate-100 mt-auto">
             <button
               onClick={() => { onSelectItem(configItem.id); if (window.innerWidth < 1024) onClose(); }}

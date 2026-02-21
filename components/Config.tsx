@@ -59,10 +59,47 @@ export const Config: React.FC<ConfigProps> = ({ lang, onConfigUpdate }) => {
 
   const saveShowroomConfig = async () => {
     setLoading(true);
-    const { error } = await supabase.from('showroom_config').update(showroom).eq('id', 1);
-    if (!error) {
-      alert("Configuration du showroom mise à jour !");
+    try {
+      // First try to update
+      const { error: updateError } = await supabase
+        .from('showroom_config')
+        .update({
+          name: showroom.name,
+          slogan: showroom.slogan,
+          address: showroom.address,
+          facebook: showroom.facebook,
+          instagram: showroom.instagram,
+          whatsapp: showroom.whatsapp,
+          logo_data: showroom.logo_data,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', 1);
+
+      if (updateError) {
+        // If update fails, try to insert
+        const { error: insertError } = await supabase
+          .from('showroom_config')
+          .insert([{
+            id: 1,
+            name: showroom.name,
+            slogan: showroom.slogan,
+            address: showroom.address,
+            facebook: showroom.facebook,
+            instagram: showroom.instagram,
+            whatsapp: showroom.whatsapp,
+            logo_data: showroom.logo_data,
+            updated_at: new Date().toISOString()
+          }]);
+        
+        if (insertError) throw insertError;
+      }
+
+      console.log('✅ Configuration du showroom mise à jour !');
+      alert("Configuration du showroom mise à jour avec succès ! 🎉");
       onConfigUpdate();
+    } catch (err: any) {
+      console.error('Erreur lors de la sauvegarde:', err);
+      alert("Erreur lors de la sauvegarde: " + err.message);
     }
     setLoading(false);
   };
