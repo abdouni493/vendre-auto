@@ -34,6 +34,8 @@ export const Expenses: React.FC<ExpensesProps> = ({ lang, userName }) => {
   const [editingVehicleExpense, setEditingVehicleExpense] = useState<VehicleExpense | null>(null);
   const [activeTab, setActiveTab] = useState<'general' | 'vehicles'>('general');
   const [vehicles, setVehicles] = useState<PurchaseRecord[]>([]);
+  const [vehicleSearch, setVehicleSearch] = useState('');
+  const [expandedVehicles, setExpandedVehicles] = useState<string[]>([]);
   const [showCreatedDate, setShowCreatedDate] = useState(false);
 
   useEffect(() => {
@@ -66,6 +68,11 @@ export const Expenses: React.FC<ExpensesProps> = ({ lang, userName }) => {
     if (error) console.error(error);
     else setVehicles((data || []) as PurchaseRecord[]);
   };
+
+  const vehiclesById = vehicles.reduce((acc: Record<string, PurchaseRecord>, v) => {
+    if (v && v.id) acc[v.id] = v;
+    return acc;
+  }, {} as Record<string, PurchaseRecord>);
 
   const handleDelete = async (id: string) => {
     if (window.confirm(t.suppliers.confirmDelete)) {
@@ -270,37 +277,122 @@ export const Expenses: React.FC<ExpensesProps> = ({ lang, userName }) => {
 
       {/* Vehicle Expenses Tab */}
       {activeTab === 'vehicles' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
-          {vehicleExpenses.map(ex => (
-            <div key={ex.id} className="bg-white rounded-[4rem] border border-slate-100 p-10 shadow-sm hover:shadow-xl transition-all duration-700 flex flex-col relative overflow-hidden h-full">
-              <div className="flex-grow mb-10">
-                <p className="text-[10px] font-black text-slate-300 uppercase mb-2">🚗 {ex.vehicle_make} {ex.vehicle_model}</p>
-                <p className="text-[10px] font-black text-slate-400 mb-4">Plaque: {ex.vehicle_name}</p>
-                <p className="text-[10px] font-black text-slate-300 uppercase mb-2">{ex.date}</p>
-                {showCreatedDate && ex.created_at && (
-                  <p className="text-[9px] font-black text-blue-600 uppercase mb-2">📅 Créé: {new Date(ex.created_at).toLocaleDateString('fr-FR')}</p>
-                )}
-                {ex.created_by && (
-                  <p className="text-[9px] font-black text-slate-600 uppercase mb-3">👤 Par: {ex.created_by}</p>
-                )}
-                <h3 className="text-2xl font-black text-slate-900 mb-3">{ex.name}</h3>
-                <p className="text-5xl font-black text-red-600 tracking-tighter">
-                  {ex.cost.toLocaleString()} <span className="text-sm font-bold text-slate-400">{t.currency}</span>
-                </p>
-                {ex.note && (
-                  <p className="text-sm text-slate-600 mt-4 italic">📝 {ex.note}</p>
-                )}
-              </div>
-              <div className="flex gap-4 pt-8 border-t flex-col">
-                <button onClick={() => printVehicleExpenseInvoice(ex)} className="w-full py-5 rounded-[1.8rem] bg-green-600 text-white font-black text-[11px] uppercase transition-all hover:bg-green-700">🖨️ Imprimer Facture</button>
-                <div className="flex gap-4">
-                  <button onClick={() => { setEditingVehicleExpense(ex); setIsVehicleFormOpen(true); }} className="flex-1 py-5 rounded-[1.8rem] bg-slate-900 text-white font-black text-[11px] uppercase transition-all">✏️ {t.actions.edit}</button>
-                  <button onClick={() => handleDeleteVehicleExpense(ex.id)} className="px-8 py-5 rounded-[1.8rem] bg-red-50 text-red-500 border hover:bg-red-600 hover:text-white transition-all">🗑️</button>
+        <div>
+          <div className="flex items-center gap-4 mb-6">
+            <input
+              type="text"
+              placeholder="Rechercher par plaque, VIN ou nom du véhicule..."
+              value={vehicleSearch}
+              onChange={e => setVehicleSearch(e.target.value)}
+              className="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-[2rem] outline-none font-bold"
+            />
+            <button onClick={() => { setVehicleSearch(''); }} className="px-6 py-3 bg-slate-100 rounded-2xl font-black text-xs">Effacer</button>
+          </div>
+
+          {/* Build filtered list */}
+          {(() => {
+            const q = vehicleSearch.trim().toLowerCase();
+            const filtered = q === '' ? vehicleExpenses : vehicleExpenses.filter(ex => {
+              const plate = (ex.vehicle_name || '').toLowerCase();
+              const v = vehiclesById[ex.vehicle_id];
+              const vin = (v?.vin || '').toLowerCase();
+              const makeModel = ((v?.make || '') + ' ' + (v?.model || '')).toLowerCase();
+              return plate.includes(q) || vin.includes(q) || makeModel.includes(q) || (ex.vehicle_make + ' ' + ex.vehicle_model).toLowerCase().includes(q);
+            });
+
+            if (filtered.length === 0) return <p className="col-span-full text-center py-20 text-slate-400 font-black uppercase italic">Aucune dépense véhicule trouvée.</p>;
+
+            // If no search, show per-expense cards (existing behaviour)
+            if (q === '') {
+              return (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
+                  {vehicleExpenses.map(ex => (
+                    <div key={ex.id} className="bg-white rounded-[4rem] border border-slate-100 p-10 shadow-sm hover:shadow-xl transition-all duration-700 flex flex-col relative overflow-hidden h-full">
+                      <div className="flex-grow mb-10">
+                        <p className="text-[10px] font-black text-slate-300 uppercase mb-2">🚗 {ex.vehicle_make} {ex.vehicle_model}</p>
+                        <p className="text-[10px] font-black text-slate-400 mb-4">Plaque: {ex.vehicle_name}</p>
+                        <p className="text-[10px] font-black text-slate-300 uppercase mb-2">{ex.date}</p>
+                        {showCreatedDate && ex.created_at && (
+                          <p className="text-[9px] font-black text-blue-600 uppercase mb-2">📅 Créé: {new Date(ex.created_at).toLocaleDateString('fr-FR')}</p>
+                        )}
+                        {ex.created_by && (
+                          <p className="text-[9px] font-black text-slate-600 uppercase mb-3">👤 Par: {ex.created_by}</p>
+                        )}
+                        <h3 className="text-2xl font-black text-slate-900 mb-3">{ex.name}</h3>
+                        <p className="text-5xl font-black text-red-600 tracking-tighter">
+                          {ex.cost.toLocaleString()} <span className="text-sm font-bold text-slate-400">{t.currency}</span>
+                        </p>
+                        {ex.note && (
+                          <p className="text-sm text-slate-600 mt-4 italic">📝 {ex.note}</p>
+                        )}
+                      </div>
+                      <div className="flex gap-4 pt-8 border-t flex-col">
+                        <button onClick={() => printVehicleExpenseInvoice(ex)} className="w-full py-5 rounded-[1.8rem] bg-green-600 text-white font-black text-[11px] uppercase transition-all hover:bg-green-700">🖨️ Imprimer Facture</button>
+                        <div className="flex gap-4">
+                          <button onClick={() => { setEditingVehicleExpense(ex); setIsVehicleFormOpen(true); }} className="flex-1 py-5 rounded-[1.8rem] bg-slate-900 text-white font-black text-[11px] uppercase transition-all">✏️ {t.actions.edit}</button>
+                          <button onClick={() => handleDeleteVehicleExpense(ex.id)} className="px-8 py-5 rounded-[1.8rem] bg-red-50 text-red-500 border hover:bg-red-600 hover:text-white transition-all">🗑️</button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
+              );
+            }
+
+            // Group by vehicle_id and show one card per vehicle with totals + expandable expense list
+            const groups: Record<string, { vehicle?: PurchaseRecord; expenses: VehicleExpense[]; total: number }> = {};
+            for (const ex of filtered) {
+              if (!groups[ex.vehicle_id]) groups[ex.vehicle_id] = { vehicle: vehiclesById[ex.vehicle_id], expenses: [], total: 0 };
+              groups[ex.vehicle_id].expenses.push(ex);
+              groups[ex.vehicle_id].total += Number(ex.cost || 0);
+            }
+
+            return (
+              <div className="space-y-6">
+                {Object.entries(groups).map(([vid, grp]) => (
+                  <div key={vid} className="bg-white rounded-[2rem] border border-slate-100 p-6 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-black text-slate-700">{grp.vehicle ? `${grp.vehicle.make} ${grp.vehicle.model}` : 'Véhicule'}</p>
+                        <p className="text-xs text-slate-500">Plaque: {grp.vehicle?.plate || grp.expenses[0]?.vehicle_name} {grp.vehicle?.vin ? `• VIN: ${grp.vehicle.vin}` : ''}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-2xl font-black text-red-600">{grp.total.toLocaleString()} <span className="text-sm font-bold text-slate-400">{t.currency}</span></p>
+                        <p className="text-xs text-slate-400">Total dépenses</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4">
+                      <button onClick={() => setExpandedVehicles(prev => prev.includes(vid) ? prev.filter(x=>x!==vid) : [...prev, vid])} className="text-sm text-blue-600 font-black">{expandedVehicles.includes(vid) ? 'Masquer les dépenses' : `Voir ${grp.expenses.length} dépenses`}</button>
+                      {expandedVehicles.includes(vid) && (
+                        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {grp.expenses.map(ex => (
+                            <div key={ex.id} className="p-4 border rounded-lg bg-slate-50">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <p className="text-sm font-black">{ex.name}</p>
+                                  <p className="text-xs text-slate-500">{ex.date}</p>
+                                  {ex.note && <p className="text-xs italic text-slate-600">📝 {ex.note}</p>}
+                                </div>
+                                <div className="text-right">
+                                  <p className="font-black text-red-600">{Number(ex.cost).toLocaleString()} {t.currency}</p>
+                                </div>
+                              </div>
+                              <div className="flex gap-2 mt-3">
+                                <button onClick={() => printVehicleExpenseInvoice(ex)} className="px-3 py-2 bg-green-600 text-white rounded text-xs">🖨️</button>
+                                <button onClick={() => { setEditingVehicleExpense(ex); setIsVehicleFormOpen(true); }} className="px-3 py-2 bg-slate-900 text-white rounded text-xs">✏️</button>
+                                <button onClick={() => handleDeleteVehicleExpense(ex.id)} className="px-3 py-2 bg-red-50 text-red-500 rounded text-xs">🗑️</button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
-          ))}
-          {vehicleExpenses.length === 0 && <p className="col-span-full text-center py-20 text-slate-400 font-black uppercase italic">Aucune dépense véhicule enregistrée.</p>}
+            );
+          })()}
         </div>
       )}
 

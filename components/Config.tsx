@@ -60,8 +60,8 @@ export const Config: React.FC<ConfigProps> = ({ lang, onConfigUpdate }) => {
   const saveShowroomConfig = async () => {
     setLoading(true);
     try {
-      // First try to update
-      const { error: updateError } = await supabase
+      // First try to update; check whether any rows were affected
+      const { data: updatedRows, error: updateError } = await supabase
         .from('showroom_config')
         .update({
           name: showroom.name,
@@ -73,10 +73,14 @@ export const Config: React.FC<ConfigProps> = ({ lang, onConfigUpdate }) => {
           logo_data: showroom.logo_data,
           updated_at: new Date().toISOString()
         })
-        .eq('id', 1);
+        .eq('id', 1)
+        .select();
 
-      if (updateError) {
-        // If update fails, try to insert
+      // If update produced an error, throw
+      if (updateError) throw updateError;
+
+      // If update succeeded but didn't affect any rows, insert the row
+      if (!updatedRows || (Array.isArray(updatedRows) && updatedRows.length === 0)) {
         const { error: insertError } = await supabase
           .from('showroom_config')
           .insert([{
@@ -90,7 +94,7 @@ export const Config: React.FC<ConfigProps> = ({ lang, onConfigUpdate }) => {
             logo_data: showroom.logo_data,
             updated_at: new Date().toISOString()
           }]);
-        
+
         if (insertError) throw insertError;
       }
 
