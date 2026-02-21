@@ -6,8 +6,17 @@ COPY package.json package-lock.json* ./
 # Use `npm ci` when a lockfile exists, otherwise fall back to `npm install`
 RUN if [ -f package-lock.json ]; then npm ci --silent; else npm install --silent; fi
 
-# copy source and build
+# copy source
 COPY . .
+
+# Set Vite build-time environment variables from build args
+ARG VITE_SUPABASE_URL
+ARG VITE_SUPABASE_ANON_KEY
+
+ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
+ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
+
+# build
 RUN npm run build
 
 FROM nginx:stable-alpine
