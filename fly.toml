@@ -1,8 +1,9 @@
-[build]
-  image = "Dockerfile"
+[app]
+  # Fly app name
+  name = "vendre-auto"
 
 [env]
-  PORT = "80"
+  PORT = "8080"
 
 [deploy]
   release_command = ""
