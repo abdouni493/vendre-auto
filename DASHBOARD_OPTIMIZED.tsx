@@ -1,16 +1,49 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Language } from '../types';
-import { translations } from '../translations';
-import { supabase } from '../supabase';
+import { supabase } from './supabase';
 
-interface DashboardProps {
-  lang: Language;
+interface Sale {
+  total_price: number;
+  balance: number;
+  car_id: string;
+  created_at: string;
+  first_name: string;
+  last_name: string;
 }
 
-export const DashboardOptimized: React.FC<DashboardProps> = ({ lang }) => {
-  const t = translations[lang];
+interface Purchase {
+  id: string;
+  totalCost: number;
+  sellingPrice: number;
+  is_sold: boolean;
+  created_at: string;
+  make: string;
+  model: string;
+}
+
+interface Expense {
+  cost: number;
+}
+
+interface Transaction {
+  amount: number;
+  type: string;
+}
+
+interface DashboardStats {
+  revenue: number;
+  profit: number;
+  stockValue: number;
+  debt: number;
+  expenses: number;
+  teamCost: number;
+  carsInStock: number;
+  partners: number;
+  inspections: number;
+}
+
+export const DashboardOptimized: React.FC = () => {
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<DashboardStats>({
     revenue: 0,
     profit: 0,
     stockValue: 0,
@@ -21,7 +54,7 @@ export const DashboardOptimized: React.FC<DashboardProps> = ({ lang }) => {
     partners: 0,
     inspections: 0
   });
-  const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [recentActivity, setRecentActivity] = useState<Sale[]>([]);
 
   // ✅ OPTIMIZATION: Memoized fetch function to prevent unnecessary reruns
   const fetchDashboardData = useCallback(async () => {
@@ -66,10 +99,10 @@ export const DashboardOptimized: React.FC<DashboardProps> = ({ lang }) => {
           .select('id', { count: 'exact', head: true })
       ]);
 
-      const sales = salesRes.data || [];
-      const purchases = purchasesRes.data || [];
-      const expenses = expensesRes.data || [];
-      const transactions = transRes.data || [];
+      const sales = (salesRes.data as Sale[]) || [];
+      const purchases = (purchasesRes.data as Purchase[]) || [];
+      const expenses = (expensesRes.data as Expense[]) || [];
+      const transactions = (transRes.data as Transaction[]) || [];
 
       // ✅ OPTIMIZATION: Use reduce() instead of forEach for single pass calculation
       let rev = 0, debt = 0, gain = 0;
