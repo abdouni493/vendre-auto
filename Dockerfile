@@ -3,7 +3,8 @@ WORKDIR /app
 
 # install dependencies
 COPY package.json package-lock.json* ./
-RUN npm ci --silent || npm install --silent
+# Use `npm ci` when a lockfile exists, otherwise fall back to `npm install`
+RUN if [ -f package-lock.json ]; then npm ci --silent; else npm install --silent; fi
 
 # copy source and build
 COPY . .
