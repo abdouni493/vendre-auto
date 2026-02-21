@@ -1,0 +1,8 @@
+[build]
+  image = "Dockerfile"
+
+[env]
+  PORT = "80"
+
+[deploy]
+  release_command = ""
