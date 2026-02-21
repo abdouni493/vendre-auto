@@ -11,6 +11,8 @@ COPY . .
 RUN npm run build
 
 FROM nginx:stable-alpine
+# install envsubst (gettext) so we can substitute $PORT in the nginx template at runtime
+RUN apk add --no-cache gettext
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Use nginx.conf as a template; the entrypoint will substitute $PORT
