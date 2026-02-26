@@ -1,25 +1,23 @@
-app = "vendre-auto"
-primary_region = "cdg"
+# fly.toml app configuration file generated for vendre-auto on 2026-02-21T23:46:41Z
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'vendre-auto'
+primary_region = 'ams'
 
 [build]
-
-[env]
 
 [http_service]
   internal_port = 8080
   force_https = true
-  auto_stop_machines = true
+  auto_stop_machines = 'stop'
   auto_start_machines = true
   min_machines_running = 0
+  processes = ['app']
 
-[build.args]
-  VITE_SUPABASE_URL = "https://oancxlxjdstcahbfcqhx.supabase.co"
-  VITE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9hbmN4bHhqZHN0Y2FoYmZjcWh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEyODgxOTksImV4cCI6MjA4Njg2NDE5OX0.ETf6Bsm9ki5D5OLMiCkgI5FD0tDP96HrfL9JI7-rbWg"
-
-[checks]
-  [checks.http]
-    port = 8080
-    type = "http"
-    interval = "15s"
-    timeout = "10s"
-    grace_period = "20s"
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1
+  memory_mb = 256
